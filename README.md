@@ -1,0 +1,1 @@
+For docs and demo, check out <a href="http://tinyspeck.github.com/avatar-animations/">http://tinyspeck.github.com/avatar-animations/</a>
