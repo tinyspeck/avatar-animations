@@ -47,10 +47,13 @@
 		It requires a browser that supports Canvas (like Chrome, Safari or FireFox).
 	</p>
 
-	<p>
-		Ready? <a href="anim.html">View the demo</a>.
-	</p>
-
+<div style="border-top: 1px solid #666; border-bottom: 1px solid #666; margin: 1em 0; padding: 1em 0;">
+	<div id="loading" style="text-align: center">Loading demo...</div>
+	<div id="content" style="display: none; text-align: center">
+		<canvas id="my-canvas" width="200" height="200" style="border: 1px solid black"></canvas><br />
+		Animation: <select id="choose-anim"></select>
+	</div>
+</div>
 
     <h2>The source</h2>
     <p>
@@ -64,6 +67,159 @@
 
   </div>
 
-  
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+<script>
+
+var canvas_w = 200;
+var canvas_h = 200;
+
+var g_sheets = {};
+var g_anims = {};
+var g_index = {};
+
+var g_anim = '';
+var g_next_frame = 0;
+
+
+$(function(){
+
+	jQuery.support.cors = true;
+
+	$.ajax({
+		'url' : 'http://api.glitch.com/simple/players.getAnimations',
+		'dataType' : 'json',
+		'data' : { 'player_tsid' : 'PLI10VSF8V7IE' },
+		'success' : function(data, textStatus, jqXHR){
+			if (data.ok){
+				g_sheets = data.sheets;
+				g_anims = data.anims;
+				build_index();
+				$('#loading').text("Loading sheets...");
+				load_sheets();
+			}else{
+				alert('api error');
+			}
+		},
+		'error' : function(jqXHR, textStatus, errorThrown){
+			alert('api error');
+			alert(errorThrown);
+		}
+	});
+});
+
+function build_index(){
+	for (var i in g_sheets){
+
+		for (var j=0; j<g_sheets[i].frames.length; j++){
+
+			var col = j % g_sheets[i].cols;
+			var row = Math.floor(j / g_sheets[i].cols);
+
+			g_index[g_sheets[i].frames[j]] = [i, col, row];
+		}
+	}
+}
+
+function load_sheets(){
+	for (var i in g_sheets){
+		g_sheets[i].img = new Image();
+		g_sheets[i].img.onload = function(i){
+			return function(){
+				image_loaded(i);
+			};
+		}(i);
+		g_sheets[i].img.onerror = image_failed;
+		g_sheets[i].img.onabort = image_failed;
+		g_sheets[i].loaded = false;
+		g_sheets[i].img.src = g_sheets[i].url;
+	}
+}
+
+function image_failed(){
+	alert('failed to load an image :(');
+}
+
+function image_loaded(idx){
+
+	g_sheets[idx].loaded = true;
+	g_sheets[idx].frame_width = Math.round(g_sheets[idx].img.width / g_sheets[idx].cols);
+	g_sheets[idx].frame_height = Math.round(g_sheets[idx].img.height / g_sheets[idx].rows);
+
+	var done = 0;
+	var num = 0;
+	for (var i in g_sheets){
+		num++;
+		if (g_sheets[i].loaded) done++;
+	}
+
+	if (done == num){
+
+		var choices = '';
+		for (var i in g_anims){
+			choices += "<option>"+i+"</option>";
+		}
+
+		$('#choose-anim').html(choices).val('walk1x').change(function(){
+			g_anim = $('#choose-anim').val();
+			g_next_frame = 0;
+		});
+
+		$('#loading').hide();
+		$('#content').show();
+		
+		animate();
+	}else{
+		$('#loading').text("Loading sheets: "+done+"/"+num);
+	}
+}
+
+function animate(){
+
+	g_anim = 'walk1x';
+	g_next_frame = 0;
+
+	window.setInterval(nextFrame, 33);
+}
+
+function nextFrame(){
+
+	drawFrame(g_anims[g_anim][g_next_frame]);
+
+	g_next_frame++;
+	if (g_next_frame >= g_anims[g_anim].length){
+		g_next_frame = 0;
+	}
+}
+
+function drawFrame(id){
+
+	//console.log('draw frame '+id);
+
+	// frame info
+	var sheet = g_index[id][0];
+	var col = g_index[id][1];
+	var row = g_index[id][2];
+
+	// source image
+	var f_w = g_sheets[sheet].frame_width;
+	var f_h = g_sheets[sheet].frame_height;
+	var f_x = f_w * col;
+	var f_y = f_h * row;
+
+	// destination image
+	var d_x = (canvas_w / 2) - (f_w / 2);
+	var d_y = (canvas_h / 2) - (f_h / 2);
+
+	var canvas = document.getElementById("my-canvas");
+	var context = canvas.getContext("2d");
+
+	context.clearRect(0, 0, canvas_w, canvas_h);
+	context.drawImage(g_sheets[sheet].img, f_x, f_y, f_w, f_h, d_x, d_y, f_w, f_h);
+}
+
+
+</script>
+
 </body>
 </html>
