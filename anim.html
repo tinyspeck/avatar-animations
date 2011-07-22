@@ -103,28 +103,12 @@ function image_loaded(idx){
 	}
 }
 
-function drawFrame(id){
+function animate(){
 
-	//console.log('draw frame '+id);
+	g_anim = 'walk1x';
+	g_next_frame = 0;
 
-	// find source coords
-	var sheet = g_index[id][0];
-	var col = g_index[id][1];
-	var row = g_index[id][2];
-
-	var f_w = g_sheets[sheet].frame_width;
-	var f_h = g_sheets[sheet].frame_height;
-	var f_x = f_w * col;
-	var f_y = f_h * row;
-
-	var p_x = (300 / 2) - (f_w / 2);
-	var p_y = (300 / 2) - (f_h / 2);
-
-	var canvas = document.getElementById("my-canvas");
-	var context = canvas.getContext("2d");
-
-	context.clearRect(0, 0, 300, 300);
-	context.drawImage(g_sheets[sheet].img, f_x, f_y, f_w, f_h, p_x, p_y, f_w, f_h);
+	window.setInterval(nextFrame, 33);
 }
 
 function nextFrame(){
@@ -137,13 +121,33 @@ function nextFrame(){
 	}
 }
 
-function animate(){
+function drawFrame(id){
 
-	g_anim = 'walk1x';
-	g_next_frame = 0;
+	//console.log('draw frame '+id);
 
-	window.setInterval(nextFrame, 33);
+	// frame info
+	var sheet = g_index[id][0];
+	var col = g_index[id][1];
+	var row = g_index[id][2];
+
+	// source image
+	var f_w = g_sheets[sheet].frame_width;
+	var f_h = g_sheets[sheet].frame_height;
+	var f_x = f_w * col;
+	var f_y = f_h * row;
+
+	// destination image
+	var d_x = (300 / 2) - (f_w / 2);
+	var d_y = (300 / 2) - (f_h / 2);
+
+	var canvas = document.getElementById("my-canvas");
+	var context = canvas.getContext("2d");
+
+	context.clearRect(0, 0, 300, 300);
+	context.drawImage(g_sheets[sheet].img, f_x, f_y, f_w, f_h, d_x, d_y, f_w, f_h);
 }
+
+
 
 </script>
 </head>
